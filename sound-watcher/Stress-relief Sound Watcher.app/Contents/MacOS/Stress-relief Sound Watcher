@@ -1,0 +1,118 @@
+#!/bin/bash
+# "Stress-relief Sound Watcher" — executable của app bundle cùng tên.
+# Tự động mở/đóng /Applications/Stress-relief.app theo trạng thái
+# "Background Sounds" của macOS (com.apple.ComfortSounds / comfortSoundsEnabled).
+#
+# Bất biến mỗi chu kỳ:  app đang chạy  <=>  comfortSoundsEnabled == 1
+#
+# Cách dùng:
+#   (không tham số)  → vòng lặp theo dõi vĩnh viễn (LaunchAgent chạy mode này)
+#   --dry-run        → đọc 1 lần, chỉ ghi log hành động sẽ làm, KHÔNG đụng app, rồi thoát
+#   --quit           → đóng Stress-relief.app ngay rồi thoát
+#   --mock FILE      → đọc trạng thái từ FILE thay vì defaults (để test), chạy 1 lần
+
+APP_PATH="/Applications/Stress-relief.app"
+APP_ID="devplaceholder.QC6GJDLD.Stress-relief"
+PREF_DOMAIN="com.apple.ComfortSounds"
+PREF_KEY="comfortSoundsEnabled"
+POLL_SECONDS=2
+LOG_FILE="$HOME/Library/Logs/stress-relief-watcher.log"
+
+MODE="loop"
+MOCK="0"
+MOCK_FILE="/tmp/comfort-sounds-state"
+case "${1:-}" in
+  --dry-run) MODE="dry-run" ;;
+  --quit)    MODE="quit" ;;
+  --mock)    MODE="one-shot"; MOCK="1"; MOCK_FILE="${2:-$MOCK_FILE}" ;;
+esac
+
+log() {
+  # truncate log if it grows past 200 KB
+  if [ -f "$LOG_FILE" ] && [ "$(stat -f %z "$LOG_FILE")" -gt 204800 ]; then
+    : > "$LOG_FILE"
+  fi
+  echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG_FILE"
+}
+
+read_state() {
+  if [ "$MOCK" = "1" ]; then
+    cat "$MOCK_FILE" 2>/dev/null || echo 0
+    return
+  fi
+  # defaults read trả về giá trị số; key thiếu → coi như OFF
+  v=$(defaults read "$PREF_DOMAIN" "$PREF_KEY" 2>/dev/null)
+  if [ "$v" = "1" ]; then echo 1; else echo 0; fi
+}
+
+app_running() {
+  pgrep -f "$APP_PATH/Contents/MacOS/Stress-relief" > /dev/null 2>&1
+}
+
+quit_app() {
+  # graceful trước, SIGTERM làm phương án dự phòng
+  osascript -e "tell application id \"$APP_ID\" to quit" > /dev/null 2>&1
+  for _ in 1 2 3 4 5; do
+    app_running || return 0
+    sleep 0.4
+  done
+  log "WARN graceful quit failed, sending SIGTERM"
+  pkill -f "$APP_PATH/Contents/MacOS/Stress-relief" 2>/dev/null
+}
+
+launch_app() {
+  open -g "$APP_PATH" 2>&1 | while read -r err; do log "open error: $err"; done
+}
+
+apply_state() {
+  local state="$1"
+  if [ "$state" = "1" ]; then
+    if app_running; then
+      log "background-sounds ON: app already running"
+    elif [ "$MODE" = "dry-run" ]; then
+      log "DRY-RUN background-sounds ON: would launch app"
+    else
+      launch_app
+      log "background-sounds ON: launched app"
+    fi
+  else
+    if app_running; then
+      if [ "$MODE" = "dry-run" ]; then
+        log "DRY-RUN background-sounds OFF: would quit app"
+      else
+        quit_app
+        log "background-sounds OFF: quit app"
+      fi
+    else
+      log "background-sounds OFF: app already not running"
+    fi
+  fi
+}
+
+case "$MODE" in
+  quit)
+    if app_running; then quit_app; log "manual --quit: closed app"; else log "manual --quit: app not running"; fi
+    exit 0
+    ;;
+  dry-run|one-shot)
+    log "watcher one-shot mode=$MODE (pid $$)"
+    state=$(read_state)
+    log "state read: $state"
+    apply_state "$state"
+    exit 0
+    ;;
+esac
+
+log "watcher started (pid $$)"
+trap 'log "watcher stopped"; exit 0' TERM INT
+
+prev="init"
+while true; do
+  state=$(read_state)
+  if [ "$state" != "$prev" ]; then
+    log "state $prev -> $state"
+    apply_state "$state"
+    prev="$state"
+  fi
+  sleep "$POLL_SECONDS"
+done
