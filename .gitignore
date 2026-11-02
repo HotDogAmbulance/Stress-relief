@@ -1,4 +1,6 @@
 .DS_Store
+.backups/
+build/
 xcuserdata/
 DerivedData/
 *.xcdebugger

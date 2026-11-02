@@ -130,25 +130,9 @@ cp AppIcon.icns /Applications/Stress-relief.app/Contents/Resources/
 | Bootstrap lỗi `5: Input/output error` | Thường là lỗi tạm thời khi bootout chạy cùng lúc → bootstrap lại |
 | Log phình to | Tự truncate ở 200 KB; kiểm tra `stat -f %z ~/Library/Logs/stress-relief-watcher.log` |
 
-## Roadmap — mục còn cần polish thêm
+## Trạng thái hoàn thiện (`final-version-main`)
 
-Hai animation sau vẫn đang ở trạng thái "được rồi nhưng chưa đẹp nhất", cần vẽ lại kỹ hơn:
-
-### 1. BABBLE — bản vẽ Wassily Kandinsky
-- **Vấn đề hiện tại:** hình khối Kandinsky (vòng tròn, cung, giao điểm) còn thô, bị chia gạch 8-bit làm mất nét bố cục, các lớp chồng nhau khó đọc.
-- **Cần làm:**
-  - Vẽ lại các composition rõ ràng hơn: vòng tròn đồng tâm, tia chéo, cung tròn tách lớp có viền đậm (outline) theo phong cách "Composition VIII" / "Farbstudie Quadrate".
-  - Bảng màu riêng cho babble (xanh cobalt, vàng ochre, đỏ cadmium, đen) thay vì tái dùng palette chung.
-  - Animation chuyển động các khối theo nhịp (mỗi khối tự xoay/trượt quanh tâm riêng) thay vì scroll toàn cục.
-
-### 2. STEAM — cô gái cartoon 16 màu
-- **Vấn đề hiện tại:** khuôn hàm và đôi môi vẽ theo góc nhìn thẳng, trông phẳng; mũi & môi đang cố định cứng trong bitmap 124×20 (`CartoonGirl8Bit`).
-- **Cần làm:**
-  - Vẽ lại **khuôn hàm cô gái** (viền cằm, đường hàm bên) và **đôi môi** theo **góc nhìn chéo sang phải một chút** (yaw nhẹ ~10-15°): mép môi bên phải lùi sâu hơn, góc hàm phải thu ngắn, đang môi lệch tâm.
-  - Giữ nguyên bảng 16 màu hiện có (đã chuẩn cel-shading) và cơ chế "mũi & môi cố định không bị steam đè".
-  - Nhớ cập nhật cả hàng pixel lộn ngược trong `rows` (bitmap lưu từ trên xuống, render từ dưới lên).
-
-Sau khi sửa, rebuild app và test bằng cách đổi `theme` sang `.babble` / `.steam`.
+Toàn bộ 16 cảnh 8-bit — bao gồm **BABBLE** (bản vẽ Kandinsky với bảng màu O(1) `32,768` màu và gradient khởi tạo sẵn), **STEAM** (cô gái anime 8-bit nháy mắt giữa 5 tầng khói suối khoáng tím đêm), và **OCEAN** (bãi biển bình minh 3 tầng sóng, 5 cá mập, 10 sao biển, 2 tôm và cá hề tương tác khi chạm Touch Bar) — đã được hoàn tất và tối ưu hóa CPU/GPU/Pin.
 
 ## Watcher bundle nhận diện trong Login Items
 

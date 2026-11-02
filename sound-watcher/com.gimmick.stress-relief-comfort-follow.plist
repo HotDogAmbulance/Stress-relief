@@ -18,8 +18,8 @@
     <key>ProcessType</key>
     <string>Background</string>
     <key>StandardOutPath</key>
-    <string>/Users/gimmick/Library/Logs/stress-relief-watcher.log</string>
+    <string>/dev/null</string>
     <key>StandardErrorPath</key>
-    <string>/Users/gimmick/Library/Logs/stress-relief-watcher.log</string>
+    <string>/dev/null</string>
 </dict>
 </plist>

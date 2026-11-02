@@ -11,16 +11,20 @@
 #   --quit           → đóng Stress-relief.app ngay rồi thoát
 #   --mock FILE      → đọc trạng thái từ FILE thay vì defaults (để test), chạy 1 lần
 
+set -u
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+
 APP_PATH="/Applications/Stress-relief.app"
 APP_ID="devplaceholder.QC6GJDLD.Stress-relief"
 PREF_DOMAIN="com.apple.ComfortSounds"
 PREF_KEY="comfortSoundsEnabled"
 POLL_SECONDS=2
 LOG_FILE="$HOME/Library/Logs/stress-relief-watcher.log"
+LOG_COUNT=0
 
 MODE="loop"
 MOCK="0"
-MOCK_FILE="/tmp/comfort-sounds-state"
+MOCK_FILE="${TMPDIR:-/tmp}/comfort-sounds-state"
 case "${1:-}" in
   --dry-run) MODE="dry-run" ;;
   --quit)    MODE="quit" ;;
@@ -28,20 +32,25 @@ case "${1:-}" in
 esac
 
 log() {
-  # truncate log if it grows past 200 KB
-  if [ -f "$LOG_FILE" ] && [ "$(stat -f %z "$LOG_FILE")" -gt 204800 ]; then
+  # Kiểm tra kích thước log định kỳ để giảm fork/stat, truncate nếu vượt 200 KB
+  if [ "$LOG_COUNT" -eq 0 ] && [ -f "$LOG_FILE" ] && [ "$(stat -f %z "$LOG_FILE" 2>/dev/null || echo 0)" -gt 204800 ]; then
     : > "$LOG_FILE"
   fi
+  LOG_COUNT=$(( (LOG_COUNT + 1) % 50 ))
   echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG_FILE"
 }
 
 read_state() {
   if [ "$MOCK" = "1" ]; then
-    cat "$MOCK_FILE" 2>/dev/null || echo 0
+    if [ -f "$MOCK_FILE" ] && [ ! -L "$MOCK_FILE" ]; then
+      cat "$MOCK_FILE" 2>/dev/null || echo 0
+    else
+      echo 0
+    fi
     return
   fi
   # defaults read trả về giá trị số; key thiếu → coi như OFF
-  v=$(defaults read "$PREF_DOMAIN" "$PREF_KEY" 2>/dev/null)
+  v=$(defaults read "$PREF_DOMAIN" "$PREF_KEY" 2>/dev/null || echo 0)
   if [ "$v" = "1" ]; then echo 1; else echo 0; fi
 }
 
@@ -61,6 +70,10 @@ quit_app() {
 }
 
 launch_app() {
+  if [ ! -d "$APP_PATH" ] || [ -L "$APP_PATH" ]; then
+    log "SECURITY ERROR: $APP_PATH is missing or is a symlink, refusing to launch"
+    return 1
+  fi
   open -g "$APP_PATH" 2>&1 | while read -r err; do log "open error: $err"; done
 }
 
@@ -72,8 +85,9 @@ apply_state() {
     elif [ "$MODE" = "dry-run" ]; then
       log "DRY-RUN background-sounds ON: would launch app"
     else
-      launch_app
-      log "background-sounds ON: launched app"
+      if launch_app; then
+        log "background-sounds ON: launched app"
+      fi
     fi
   else
     if app_running; then
