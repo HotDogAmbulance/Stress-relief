@@ -94,19 +94,16 @@ final class Wave8BitView: NSView {
         monitorTimer = nil
     }
 
-    // BẮT BUỘC: NSView mặc định bỏ qua direct touch trên TouchBar —
-    // phải khai báo .direct thì touchesBegan mới được gọi
     override var allowedTouchTypes: NSTouch.TouchTypeMask {
         get { [.direct] }
         set { super.allowedTouchTypes = newValue }
     }
 
-    // Chạm TouchBar: cá hề xuất hiện (DUY NHẤT khi đang là âm thanh Ocean)
     override func touchesBegan(with event: NSEvent) {
         if monitor.currentTheme == .ocean {
             let now = Date().timeIntervalSinceReferenceDate
             clownfishSpawn = now
-            clownfishUntil = now + 6.5
+            clownfishUntil = now + 7.5
             needsDisplay = true
         }
         super.touchesBegan(with: event)

@@ -29,7 +29,7 @@ Because the hardware generation is now fixed in time, **Stress-relief** does not
 | **Balanced Noise** | Dual-phase cyan & emerald harmonic wave interference | `12 × 402` |
 | **Bright Noise** | Three-band high-frequency luminous wave spectrum | `12 × 402` |
 | **Dark Noise** | Deep multi-octave Brownian geological strata | `12 × 402` |
-| **Ocean** | Sunrise beach, 3-layer teal waves, 5 surfacing sharks, 10 starfish, 2 scuttling shrimp, and an interactive **clownfish** when you tap the Touch Bar | `20 × 670` |
+| **Ocean** | Sunrise beach, 3-layer teal waves, 5 surfacing sharks, 10 starfish, and 2 scuttling shrimp | `20 × 670` |
 | **Rain** | Wind-slanted multi-depth rain curtains with ground splashes | `15 × 502` |
 | **Rain on Roof** | Cozy cross-section interior under a rain-drenched roof, warm lamps, cat, and rising smoke | `20 × 670` |
 | **Stream** | Flowing creek with mossy boulders, lotus pads, dragonfly, and 7 swimming koi | `20 × 670` |
@@ -54,7 +54,7 @@ Because the hardware generation is now fixed in time, **Stress-relief** does not
 │   ├── TouchBarPrivateAPI.swift     # DFRFoundation bridge (system-modal bar without close box)
 │   ├── ColorCache.swift             # Hex/RGB Lerp cache & O(1) 32,768-color LUT for rasterizer
 │   ├── ComfortSoundsMonitor.swift   # Zero-overhead CFPreferences reader with binary plist diffing
-│   ├── Wave8BitView.swift           # Core 25 FPS renderer, sleep/wake power management & touch handler
+│   ├── Wave8BitView.swift           # Core 25 FPS renderer & sleep/wake power management
 │   └── Wave8BitView+Themes.swift    # Procedural shaders for all 16 themes
 ├── Stress-relief.xcodeproj/         # Native macOS Xcode project
 └── sound-watcher/                   # Companion LaunchAgent & app bundle
@@ -110,3 +110,16 @@ Now open **System Settings → Accessibility → Audio → Background Sounds** (
 launchctl bootout gui/$(id -u)/com.gimmick.stress-relief-comfort-follow
 rm -f ~/Library/LaunchAgents/com.gimmick.stress-relief-comfort-follow.plist
 ```
+
+---
+
+## Credits
+
+**Stress-relief** is a pure vibe-crafted project:
+
+- **Creator, Vision & Art Direction (Vibe):** **Tùng** ([@HotDogAmbulance](https://github.com/HotDogAmbulance))
+- **Co-built & Engineered with:**
+  - **Argon** (in Antigravity)
+  - **Argon** on `studio.google` (Google AI Studio)
+  - **Gemini 3.8 Flash**
+

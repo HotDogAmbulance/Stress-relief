@@ -132,7 +132,7 @@ cp AppIcon.icns /Applications/Stress-relief.app/Contents/Resources/
 
 ## Trạng thái hoàn thiện (`final-version-main`)
 
-Toàn bộ 16 cảnh 8-bit — bao gồm **BABBLE** (bản vẽ Kandinsky với bảng màu O(1) `32,768` màu và gradient khởi tạo sẵn), **STEAM** (cô gái anime 8-bit nháy mắt giữa 5 tầng khói suối khoáng tím đêm), và **OCEAN** (bãi biển bình minh 3 tầng sóng, 5 cá mập, 10 sao biển, 2 tôm và cá hề tương tác khi chạm Touch Bar) — đã được hoàn tất và tối ưu hóa CPU/GPU/Pin.
+Toàn bộ 16 cảnh 8-bit — bao gồm **BABBLE** (bản vẽ Kandinsky với bảng màu O(1) `32,768` màu và gradient khởi tạo sẵn), **STEAM** (cô gái anime 8-bit nháy mắt giữa 5 tầng khói suối khoáng tím đêm), và **OCEAN** (bãi biển bình minh 3 tầng sóng, 5 cá mập, 10 sao biển và 2 chú tôm trên cát) — đã được hoàn tất và tối ưu hóa CPU/GPU/Pin.
 
 ## Watcher bundle nhận diện trong Login Items
 

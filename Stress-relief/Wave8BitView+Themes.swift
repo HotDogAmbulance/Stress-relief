@@ -1521,12 +1521,97 @@ extension Wave8BitView {
 
     // 13. OCEAN — BÃI BIỂN BÌNH MINH 8-BIT (ghép 2 ảnh mẫu: trời đỏ-crimson→vàng kim + sóng teal lớp tầng, BỎ HẲN NGỌN NÚI)
     // Trời bình minh + mặt trời + đàn chim chữ V | 3 tầng sóng chuyển động đa hướng | 5 cá mập thay nhau thò vây-lặn
-    // Bãi cát: 10 sao biển (5 nâu + 5 xanh lá) & 2 tôm nâu (gần trái, trái-xa-giữa) | Chạm TouchBar → cá hề bơi qua
+    // Bãi cát: 10 sao biển (5 nâu + 5 xanh lá) & 2 tôm nâu (gần trái, trái-xa-giữa)
     private func drawSunriseOceanScene(col: Int, row: Int) -> CGColor {
         let x = col % 670
         let dx = Double(x), dy = Double(row)
         let horizon = 14.0
         let t = realTime
+
+        if t >= clownfishSpawn && t < clownfishUntil {
+            let q = (t - clownfishSpawn) / max(0.1, clownfishUntil - clownfishSpawn)
+            let cx = 715.0 - q * 760.0 // bơi ngang từ mép phải qua hết mép trái
+            let cy = 9.5 + sin(q * 10.0) * 0.65
+            let u = dx - cx
+            let sway = sin(t * 7.5 - u * 0.14) * 0.45
+            let v = dy - (cy + sway)
+
+            if u >= -28.0 && u <= 42.0 {
+                // Mắt cá hề (có điểm bắt sáng trắng và viền mắt)
+                let eyeDist = hypot((u + 15.5) / 2.6, (v - 2.2) / 2.2)
+                if eyeDist < 0.45 && u < -15.8 && v > 2.4 { return c("#FFFFFF") }
+                if eyeDist < 1.0 { return c("#141619") }
+                if eyeDist < 1.35 { return c("#FFB703") }
+
+                // Vây ngực (giữa thân)
+                let pecDist = hypot((u + 3.5) / 4.8, (v + 2.2) / 2.8)
+                if pecDist < 1.0 && u > -4.5 {
+                    return (pecDist > 0.78) ? c("#141619") : c("#FF7B00")
+                }
+
+                // Thân chính cá hề: cao kín thanh Touch Bar (bán kính dọc ~8.2 hàng + vây lưng/bụng chạm sát đáy 0..19)
+                let bodyRx = 24.0
+                let bodyRy = 8.2
+                let bodyDist = hypot(u / bodyRx, v / bodyRy)
+                if bodyDist <= 1.0 {
+                    // Viền đen mỏng đặc trưng ở rìa thân cá hề
+                    if bodyDist > 0.91 { return c("#1B1D22") }
+
+                    // 3 sọc trắng viền đen đặc trưng của cá hề (Nemo): đầu, giữa thân, cuống đuôi
+                    let waveS = sin(v * 0.25) * 1.1
+                    let dStripe1 = abs(u + 9.5 - waveS)
+                    let dStripe2 = abs(u - 2.5 + waveS)
+                    let dStripe3 = abs(u - 15.0 - waveS * 0.6)
+
+                    if dStripe1 < 2.6 || dStripe2 < 3.0 || dStripe3 < 2.1 {
+                        return (v > 3.5) ? c("#FFFFFF") : ((v < -3.5) ? c("#DCEFF7") : c("#FFF8F0"))
+                    }
+                    if dStripe1 < 3.45 || dStripe2 < 3.85 || dStripe3 < 2.85 {
+                        return c("#141619")
+                    }
+
+                    // Thân cam rực rỡ phân tầng ánh sáng 8-bit
+                    if v > 4.2 { return c("#FF5400") }
+                    if v > -2.5 { return c("#FF7B00") }
+                    return c("#FF9E00")
+                }
+
+                // Vây lưng (trải dọc đỉnh Touch Bar lên tới row 19)
+                if u >= -10.0 && u <= 15.0 && v > 0.0 {
+                    let dorsalTop = 9.8 - abs(u - 1.5) * 0.14 + sin(u * 0.45) * 0.8
+                    if v <= dorsalTop {
+                        return (v > dorsalTop - 1.1) ? c("#141619") : c("#FF6D00")
+                    }
+                }
+
+                // Vây bụng (chạm sát đáy Touch Bar xuống row 0)
+                if u >= -6.0 && u <= 13.0 && v < 0.0 {
+                    let ventralBot = -9.6 + abs(u - 3.0) * 0.15
+                    if v >= ventralBot {
+                        return (v < ventralBot + 1.1) ? c("#141619") : c("#FF6D00")
+                    }
+                }
+
+                // Vây đuôi xòe rộng bằng chiều cao Touch Bar
+                if u >= 19.5 && u <= 33.5 {
+                    let tailSpan = 3.2 + (u - 19.5) * 0.48
+                    let tailNotch = (u > 29.5) ? abs(v) < (u - 29.5) * 0.65 : false
+                    if abs(v) <= tailSpan && !tailNotch {
+                        if u > 31.8 || abs(v) > tailSpan - 1.0 { return c("#141619") }
+                        if u > 29.8 { return c("#FFF8F0") }
+                        return (abs(v) < 2.5) ? c("#FF9E00") : c("#FF6D00")
+                    }
+                }
+
+                // Bong bóng nước sủi theo sau đuôi
+                for (bxOff, byOff, br) in [(35.5, 3.2, 1.6), (38.5, -2.4, 1.3), (40.8, 1.5, 1.1)] {
+                    let bDist = hypot(u - bxOff, v - (byOff + sin(t * 6.0 + bxOff) * 1.2))
+                    if bDist <= br {
+                        return (bDist > br - 0.55) ? c("#FFFFFF") : c("#CAF0F8")
+                    }
+                }
+            }
+        }
 
         // ================= BẦU TRỜI BÌNH MINH (ảnh mẫu 2: gradient bậc Crimson → vàng kim) =================
         if dy >= horizon {
@@ -1681,23 +1766,6 @@ extension Wave8BitView {
             // xoáy bọt sau vây
             if lift > 0.3 && dy <= surf + 0.6 && dy > surf - 0.5 && abs(dx - sx - 2.8) < 1.7 &&
                sin(dx * 2.2 - t * 4.0) > 0.05 { return c("#E8FBFC") }
-        }
-
-        // ================= CÁ HỀ — XUẤT HIỆN KHI CHẠM TOUCHBAR (riêng âm thanh Ocean) =================
-        if t >= clownfishSpawn && t < clownfishUntil {
-            let q = (t - clownfishSpawn) / max(0.1, clownfishUntil - clownfishSpawn)
-            let cx = 660.0 - q * 640.0                    // bơi ngang từ phải sang trái
-            let cy = 8.2 + sin(q * 8.0) * 1.4             // lượn sóng
-            let u = dx - cx, v = dy - cy
-            if hypot(u + 1.75, (v - 0.3) * 1.6) < 0.4 { return c("#1B1D22") } // mắt
-            let body = hypot(u / 2.4, v / 1.12)
-            if body < 1.0 {
-                if abs(u - 0.55) < 0.3 || abs(u + 1.05) < 0.26 { return c("#FFF8F0") } // 2 sọc trắng
-                return c(v > 0.2 ? "#FF8C2E" : "#F2620F")
-            }
-            if u >= 2.2 && u <= 3.1 && abs(v) < 0.85 * max(0.1, u - 2.0) { return c("#F2620F") }          // đuôi
-            if u >= -0.7 && u <= 0.7 && v >= 1.12 && v < 1.12 + 0.65 * (1.0 - abs(u)) { return c("#FF8C2E") } // vây lưng
-            if u > 3.2 && u < 4.8 && abs(v + 0.2) < 0.4 && sin(t * 7.0 + Double(Int(u)) * 2.1) > 0.55 { return c("#E8FBFC") } // bong bóng
         }
 
         return c(pixel)
